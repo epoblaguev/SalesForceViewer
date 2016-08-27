@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QAbstractItemView
 from PyQt5.QtCore import QRegExp, Qt
-from PyQt5.QtGui import QFont, QSyntaxHighlighter, QTextCharFormat
+from PyQt5.QtGui import QFont, QSyntaxHighlighter, QTextCharFormat, QGuiApplication
 
 
 class ResultsTable(QTableWidget):
@@ -8,6 +8,7 @@ class ResultsTable(QTableWidget):
         QTableWidget.__init__(self)
         self.setSortingEnabled(True)
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.clipboard = QGuiApplication.clipboard()
 
         if len(args) >= 2:
             self.set_data(args[0], args[1])
@@ -31,6 +32,21 @@ class ResultsTable(QTableWidget):
         while self.rowCount() > 0:
             self.removeRow(0)
 
+    def keyPressEvent(self, e):
+        if e.modifiers() & Qt.ControlModifier:  # Control Modifier
+
+            if e.key() == Qt.Key_C:  # Copy Selected Range
+                selected = self.selectedRanges()[0]
+
+                rows = []
+                for row in range(selected.topRow(), selected.bottomRow() + 1):
+                    columns = []
+                    for col in range(selected.leftColumn(), selected.rightColumn() + 1):
+                        columns.append(self.item(row, col).text().replace('\t', ' '))
+                    rows.append(columns)
+                text = '\n'.join('\t'.join(cols) for cols in rows)
+                self.clipboard.setText(text)
+
 
 class SOQLHighlighter(QSyntaxHighlighter):
 
@@ -53,12 +69,12 @@ class SOQLHighlighter(QSyntaxHighlighter):
         self.highlightingRules.extend((QRegExp(pattern, Qt.CaseInsensitive), symbol_format) for pattern in symbols)
 
     def highlightBlock(self, text):
-        for pattern, format in self.highlightingRules:
+        for pattern, frmt in self.highlightingRules:
             expression = QRegExp(pattern)
             index = expression.indexIn(text)
             while index >= 0:
                 length = expression.matchedLength()
-                self.setFormat(index, length, format)
+                self.setFormat(index, length, frmt)
                 index = expression.indexIn(text, index + length)
 
         self.setCurrentBlockState(0)

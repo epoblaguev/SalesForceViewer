@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
 from salesforce_connector import SForceConnector
+import utils
 
 
 class LoginWindow(QDialog):
@@ -20,49 +21,72 @@ class LoginWindow(QDialog):
             'security_token': ''
         }
 
-        self.lbl_saved_logins = QLabel(self)
-        self.lbl_username = QLabel(self)
-        self.lbl_password = QLabel(self)
-        self.lbl_environment = QLabel(self)
-        self.lbl_security_token = QLabel(self)
-        self.cmb_saved_logins = QComboBox(self)
-        self.txt_username = QLineEdit(self)
-        self.txt_password = QLineEdit(self)
-        self.cmb_environment = QComboBox(self)
-        self.txt_security_token = QLineEdit(self)
-        self.buttonLogin = QPushButton('Login', self)
+        self.lbl_saved_logins = QLabel('Saved Logins:')
+        self.lbl_username = QLabel('Username:')
+        self.lbl_password = QLabel('Password:')
+        self.lbl_environment = QLabel('Environment:')
+        self.lbl_security_token = QLabel('Security Token (Optional):')
+        self.cmb_saved_logins = QComboBox()
+        self.cmb_environment = QComboBox()
+        self.txt_username = QLineEdit()
+        self.txt_password = QLineEdit()
+        self.txt_security_token = QLineEdit()
+        self.btn_login = QPushButton('Login')
+        self.btn_save = QPushButton('Save Credentials')
+        self.btn_exit = QPushButton('Exit')
 
         self.setWindowTitle('SalesForce Viewer')
         self.setWindowFlags(Qt.WindowStaysOnTopHint)
-        self.lbl_saved_logins.setText('Saved Logins:')
-        self.lbl_username.setText('Username:')
-        self.lbl_password.setText('Password:')
-        self.lbl_environment.setText('Environment:')
-        self.lbl_security_token.setText('Security Token (Optinoal):')
         self.txt_password.setEchoMode(QLineEdit.Password)
-        self.buttonLogin.clicked.connect(self._handle_login)
         self.cmb_saved_logins.addItems(sorted(saved_logins.keys()))
-        self.cmb_saved_logins.currentIndexChanged.connect(self._select_saved_login)
         self.cmb_environment.addItems(['Production', 'Sandbox'])
+        self.btn_exit.setStyleSheet('background-color: red')
+
+        self.btn_login.clicked.connect(self._handle_login)
+        self.btn_save.clicked.connect(self._save_login)
+        self.btn_exit.clicked.connect(self.reject)
+        self.cmb_saved_logins.currentIndexChanged.connect(self._select_saved_login)
 
         layout = QGridLayout(self)
 
-        layout.addWidget(self.lbl_saved_logins, row_count, 0)
-        layout.addWidget(self.cmb_saved_logins, row_count, 1)
+        layout.addWidget(self.lbl_saved_logins, row_count, 0, 1, 1)
+        layout.addWidget(self.cmb_saved_logins, row_count, 1, 1, 2)
         row_count += 1
-        layout.addWidget(self.lbl_username, row_count, 0)
-        layout.addWidget(self.txt_username, row_count, 1)
+        layout.addWidget(self.lbl_username, row_count, 0, 1, 1)
+        layout.addWidget(self.txt_username, row_count, 1, 1, 2)
         row_count += 1
-        layout.addWidget(self.lbl_password, row_count, 0)
-        layout.addWidget(self.txt_password, row_count, 1)
+        layout.addWidget(self.lbl_password, row_count, 0, 1, 1)
+        layout.addWidget(self.txt_password, row_count, 1, 1, 2)
         row_count += 1
-        layout.addWidget(self.lbl_environment, row_count, 0)
-        layout.addWidget(self.cmb_environment, row_count, 1)
+        layout.addWidget(self.lbl_environment, row_count, 0, 1, 1)
+        layout.addWidget(self.cmb_environment, row_count, 1, 1, 2)
         row_count += 1
-        layout.addWidget(self.lbl_security_token, row_count, 0)
-        layout.addWidget(self.txt_security_token, row_count, 1)
+        layout.addWidget(self.lbl_security_token, row_count, 0, 1, 1)
+        layout.addWidget(self.txt_security_token, row_count, 1, 1, 2)
         row_count += 1
-        layout.addWidget(self.buttonLogin, row_count, 0, 1, 2)
+        layout.addWidget(self.btn_login, row_count, 0, 1, 1)
+        layout.addWidget(self.btn_save, row_count, 1, 1, 1)
+        layout.addWidget(self.btn_exit, row_count, 2, 1, 1)
+
+    def _save_login(self):
+        username = self.txt_username.text()
+        password = self.txt_password.text()
+        sandbox = True if self.cmb_environment.currentText() == 'Sandbox' else False
+        security_token = self.txt_security_token.text()
+        name = '{0} - {1}'.format('SANDBOX' if sandbox else 'PROD', username)
+
+        self.saved_logins[name] = {
+            'username': username,
+            'password': password,
+            'sandbox': sandbox,
+            'security_token': security_token
+        }
+
+        utils.save_config(self.saved_logins)
+
+        while self.cmb_saved_logins.count() > 0:
+            self.cmb_saved_logins.removeItem(0)
+        self.cmb_saved_logins.addItems(self.saved_logins)
 
     def _select_saved_login(self):
         current_value = self.cmb_saved_logins.currentText()

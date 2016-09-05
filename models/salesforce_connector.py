@@ -1,6 +1,7 @@
+from collections import namedtuple
+
 from simple_salesforce import Salesforce
 from simple_salesforce import api
-from collections import namedtuple
 
 Results = namedtuple('Results', 'totalSize size done headers records')
 

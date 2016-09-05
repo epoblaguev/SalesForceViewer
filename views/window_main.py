@@ -1,13 +1,12 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import *
+
 from utils.custom_widgets import SOQLHighlighter, ResultsTable
+
 
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
-
-        # Salesforce
-        # self.sf_con = sforce_connection
 
         # Popups
         self.error_message = QMessageBox()
@@ -64,16 +63,6 @@ class MainWindow(QMainWindow):
         self.root_layout.addWidget(self.splitter_v)
         self.root_frame.setLayout(self.root_layout)
 
-        # Actions
-        # self.btn_query.clicked.connect(self.run_query)
-        # self.btn_query_more.clicked.connect(self.run_query_more)
-        # self.table_list.doubleClicked.connect(self.select_table)
-        # self.table_searchbox.textChanged.connect(self.filter_tables)
-
-        # Populate Sforce Stuff
-        for table_name in self.sf_con.get_tables():
-            self.lst_tables.addItem(QListWidgetItem(table_name))
-
         # Finalize
         self.setWindowTitle('SalesForce Viewer')
 
@@ -117,38 +106,3 @@ class MainWindow(QMainWindow):
     def display_error_message(self, text):
         self.error_message.setText(text)
         self.error_message.show()
-
-    # def run_query(self):
-    #     try:
-    #         query = self.txt_query.toPlainText()
-    #         results = self.sf_con.query(query)
-    #         self.tbl_s.set_data(results.headers, results.records)
-    #         self.status_bar.showMessage('{0} / {1} Results'.format(results.size, results.totalSize))
-    #         self.btn_query_more.setDisabled(results.done)
-    #     except Exception as e:
-    #         self.error_message.setText(str(e))
-    #         self.error_message.show()
-    #
-    # def run_query_more(self):
-    #     try:
-    #         results = self.sf_con.query_more()
-    #         self.tbl_s.set_data(results.headers, results.records)
-    #         self.status_bar.showMessage('{0} / {1} Results'.format(results.size, results.totalSize))
-    #         self.btn_query_more.setDisabled(results.done)
-    #     except Exception as e:
-    #         self.error_message.setText(str(e))
-    #         self.error_message.show()
-    #
-    # def select_table(self):
-    #     table_name = self.lst_tables.currentItem().text()
-    #     fields = sorted(self.sf_con.get_table_fields(table_name))
-    #     self.txt_query.setText('SELECT {0} FROM {1}'.format(', '.join(fields), table_name))
-    #
-    # def filter_tables(self):
-    #     filter = self.txt_filter.text()
-    #     table_names = (name for name in self.sf_con.get_tables() if filter.lower() in name.lower())
-    #     while self.lst_tables.count() > 0:
-    #         self.lst_tables.takeItem(0)
-    #
-    #     for name in table_names:
-    #         self.lst_tables.addItem(QListWidgetItem(name))

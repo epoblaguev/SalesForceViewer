@@ -12,6 +12,8 @@ class MainController(object):
         self.view.set_listener_table_selected(self._select_table)
         self.view.set_listener_filter_tables(self._filter_tables)
 
+        self.view.update_table_list(self.model.get_tables())
+
     def show(self):
         self.view.show()
 

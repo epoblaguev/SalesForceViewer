@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QAbstractItemView
 from PyQt5.QtCore import QRegExp, Qt
 from PyQt5.QtGui import QFont, QSyntaxHighlighter, QTextCharFormat, QGuiApplication
+from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QAbstractItemView
 
 
 class ResultsTable(QTableWidget):

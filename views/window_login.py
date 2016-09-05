@@ -1,7 +1,7 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import *
 
-import utils
+from utils import utils
 from models.salesforce_connector import SForceConnector
 
 

@@ -19,27 +19,29 @@ class MainController(object):
 
     def _run_query(self):
         try:
-            query = self.view.get_query_text()
+            query = self.view.query_text
             results = self.model.query(query)
             self.view.update_results_table(results.headers, results.records)
-            self.view.update_query_status(results.size, results.totalSize)
+            self.view.status_text = '{0} / {1} Results'.format(results.size, results.totalSize)
+            self.view.query_more_enabled = results.size < results.totalSize
         except Exception as e:
-            self.view.display_error_message(str(e))
+            self.view.error_message = str(e)
 
     def _run_query_more(self):
         try:
             results = self.model.query_more()
             self.view.update_results_table(results.headers, results.records)
-            self.view.update_query_status(results.size, results.totalSize)
+            self.view.status_text = '{0} / {1} Results'.format(results.size, results.totalSize)
+            self.view.query_more_enabled = results.size < results.totalSize
         except Exception as e:
-            self.view.display_error_message(str(e))
+            self.view.error_message = str(e)
 
     def _select_table(self):
-        table_name = self.view.get_selected_table()
+        table_name = self.view.selected_table
         fields = sorted(self.model.get_table_fields(table_name))
-        self.view.update_query_text('SELECT {0} FROM {1}'.format(', '.join(fields), table_name))
+        self.view.query_text = 'SELECT {0} FROM {1}'.format(', '.join(fields), table_name)
 
     def _filter_tables(self):
-        filter_text = self.view.get_filter_text()
+        filter_text = self.view.filter_text
         table_names = (name for name in self.model.get_tables() if filter_text.lower() in name.lower())
-        self.view.update_table_list(table_names)
+        self.view.tables = table_names

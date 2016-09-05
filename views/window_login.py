@@ -1,11 +1,11 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import *
+import PyQt5.QtWidgets as qtw
 
 from utils import utils
 from models.salesforce_connector import SForceConnector
 
 
-class LoginWindow(QDialog):
+class LoginWindow(qtw.QDialog):
 
     def __init__(self, parent=None, saved_logins: dict = {}):
         super(LoginWindow, self).__init__(parent)
@@ -22,23 +22,23 @@ class LoginWindow(QDialog):
             'security_token': ''
         }
 
-        self.lbl_saved_logins = QLabel('Saved Logins:')
-        self.lbl_username = QLabel('Username:')
-        self.lbl_password = QLabel('Password:')
-        self.lbl_environment = QLabel('Environment:')
-        self.lbl_security_token = QLabel('Security Token (Optional):')
-        self.cmb_saved_logins = QComboBox()
-        self.cmb_environment = QComboBox()
-        self.txt_username = QLineEdit()
-        self.txt_password = QLineEdit()
-        self.txt_security_token = QLineEdit()
-        self.btn_login = QPushButton('Login')
-        self.btn_save = QPushButton('Save Credentials')
-        self.btn_exit = QPushButton('Exit')
+        self.lbl_saved_logins = qtw.QLabel('Saved Logins:')
+        self.lbl_username = qtw.QLabel('Username:')
+        self.lbl_password = qtw.QLabel('Password:')
+        self.lbl_environment = qtw.QLabel('Environment:')
+        self.lbl_security_token = qtw.QLabel('Security Token (Optional):')
+        self.cmb_saved_logins = qtw.QComboBox()
+        self.cmb_environment = qtw.QComboBox()
+        self.txt_username = qtw.QLineEdit()
+        self.txt_password = qtw.QLineEdit()
+        self.txt_security_token = qtw.QLineEdit()
+        self.btn_login = qtw.QPushButton('Login')
+        self.btn_save = qtw.QPushButton('Save Credentials')
+        self.btn_exit = qtw.QPushButton('Exit')
 
         self.setWindowTitle('SalesForce Viewer')
         self.setWindowFlags(Qt.WindowStaysOnTopHint)
-        self.txt_password.setEchoMode(QLineEdit.Password)
+        self.txt_password.setEchoMode(qtw.QLineEdit.Password)
         self.cmb_saved_logins.addItems(sorted(saved_logins.keys()))
         self.cmb_environment.addItems(['Production', 'Sandbox'])
         self.btn_exit.setStyleSheet('background-color: red')
@@ -48,7 +48,7 @@ class LoginWindow(QDialog):
         self.btn_exit.clicked.connect(self.reject)
         self.cmb_saved_logins.currentIndexChanged.connect(self._select_saved_login)
 
-        layout = QGridLayout(self)
+        layout = qtw.QGridLayout(self)
 
         layout.addWidget(self.lbl_saved_logins, row_count, 0, 1, 1)
         layout.addWidget(self.cmb_saved_logins, row_count, 1, 1, 2)
@@ -106,7 +106,7 @@ class LoginWindow(QDialog):
             self.sf_con = SForceConnector(username, password, environment)
             self.accept()
         except Exception as ex:
-            QMessageBox.warning(self, 'Error', str(ex))
+            qtw.QMessageBox.warning(self, 'Error', str(ex))
 
     def get_login(self):
         return self.sf_con

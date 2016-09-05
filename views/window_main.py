@@ -1,55 +1,55 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import *
+import PyQt5.QtWidgets as qtw
 
 from utils.custom_widgets import SOQLHighlighter, ResultsTable
 
 
-class MainWindow(QMainWindow):
+class MainWindow(qtw.QMainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
 
         # Popups
-        self.error_message = QMessageBox()
-        self.error_message.setIcon(QMessageBox.Warning)
+        self.error_message = qtw.QMessageBox()
+        self.error_message.setIcon(qtw.QMessageBox.Warning)
 
         # INIT ELEMENTS
-        self.root_frame = QFrame()
-        self.root_layout = QHBoxLayout()
-        self.btn_query = QPushButton('Run Query')
-        self.btn_query_more = QPushButton('Query More')
-        self.frm_nw = QFrame()
-        self.frm_ne = QFrame()
-        self.layout_nw = QVBoxLayout()
-        self.layout_ne = QVBoxLayout()
-        self.txt_query = QTextEdit()
+        self.root_frame = qtw.QFrame()
+        self.root_layout = qtw.QHBoxLayout()
+        self.btn_query = qtw.QPushButton('Run Query')
+        self.btn_query_more = qtw.QPushButton('Query More')
+        self.frm_nw = qtw.QFrame()
+        self.frm_ne = qtw.QFrame()
+        self.layout_nw = qtw.QVBoxLayout()
+        self.layout_ne = qtw.QVBoxLayout()
+        self.txt_query = qtw.QTextEdit()
         self.tbl_s = ResultsTable()
-        self.splitter_h = QSplitter(Qt.Horizontal)
-        self.splitter_v = QSplitter(Qt.Vertical)
-        self.lst_tables = QListWidget()
-        self.txt_filter = QLineEdit()
+        self.splitter_h = qtw.QSplitter(Qt.Horizontal)
+        self.splitter_v = qtw.QSplitter(Qt.Vertical)
+        self.lst_tables = qtw.QListWidget()
+        self.txt_filter = qtw.QLineEdit()
         self.syntax_highlighter = SOQLHighlighter(self.txt_query)
-        self.status_bar = QStatusBar()
+        self.status_bar = qtw.QStatusBar()
 
         # --- ARRANGE ELEMENTS ---
 
         # Top Left
-        self.frm_nw.setFrameShape(QFrame.StyledPanel)
+        self.frm_nw.setFrameShape(qtw.QFrame.StyledPanel)
         self.frm_nw.setLayout(self.layout_nw)
         self.layout_nw.addWidget(self.txt_filter)
         self.layout_nw.addWidget(self.lst_tables)
         self.txt_filter.setPlaceholderText('Filter Tables')
 
         # Top Right
-        self.frm_ne.setFrameShape(QFrame.StyledPanel)
+        self.frm_ne.setFrameShape(qtw.QFrame.StyledPanel)
         self.frm_ne.setLayout(self.layout_ne)
         self.layout_ne.addWidget(self.txt_query)
         self.layout_ne.addWidget(self.btn_query)
         self.layout_ne.addWidget(self.btn_query_more)
-        self.txt_query.setFrameShape(QFrame.StyledPanel)
+        self.txt_query.setFrameShape(qtw.QFrame.StyledPanel)
         self.btn_query_more.setDisabled(True)
 
         # Bottom
-        self.tbl_s.setFrameShape(QFrame.StyledPanel)
+        self.tbl_s.setFrameShape(qtw.QFrame.StyledPanel)
         self.setStatusBar(self.status_bar)
 
         # Splitters
@@ -101,7 +101,7 @@ class MainWindow(QMainWindow):
         while self.lst_tables.count() > 0:
             self.lst_tables.takeItem(0)
         for name in table_names:
-            self.lst_tables.addItem(QListWidgetItem(name))
+            self.lst_tables.addItem(qtw.QListWidgetItem(name))
 
     def display_error_message(self, text):
         self.error_message.setText(text)

@@ -1,6 +1,7 @@
+
 from PyQt5.QtCore import QRegExp, Qt
 from PyQt5.QtGui import QFont, QSyntaxHighlighter, QTextCharFormat, QGuiApplication
-from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QAbstractItemView
+from PyQt5.QtWidgets import QTableWidget
 
 
 class ResultsTable(QTableWidget):
@@ -53,7 +54,8 @@ class SOQLHighlighter(QSyntaxHighlighter):
     def __init__(self, parent=None):
         keywords = ['and', 'asc', 'desc', 'excludes', 'first', 'from', 'group', 'having', 'in', 'includes', 'last',
                     'like', 'limit', 'not', 'null', 'nulls', 'or', 'select', 'where', 'with']
-        symbols = list('-=,') + r'\[,\],\(,\)'.split(',')+['"', "'"]
+        symbols = list('-=,') + r'\[,\],\(,\),!='.split(',')
+        quote_regex = r"'[^'\\]*(\\.[^'\\]*)*('|$)"
 
         super(SOQLHighlighter, self).__init__(parent)
 
@@ -64,12 +66,16 @@ class SOQLHighlighter(QSyntaxHighlighter):
         symbol_format = QTextCharFormat()
         symbol_format.setForeground(Qt.red)
 
+        quote_format = QTextCharFormat()
+        quote_format.setForeground(Qt.darkCyan)
+
         keyword_patterns = ['\\b{0}\\b'.format(word) for word in keywords]
-        self.highlightingRules = [(QRegExp(pattern, Qt.CaseInsensitive), keyword_format) for pattern in keyword_patterns]
-        self.highlightingRules.extend((QRegExp(pattern, Qt.CaseInsensitive), symbol_format) for pattern in symbols)
+        self.highlight_rules = [(QRegExp(pattern, Qt.CaseInsensitive), keyword_format) for pattern in keyword_patterns]
+        self.highlight_rules.extend((QRegExp(pattern), symbol_format) for pattern in symbols)
+        self.highlight_rules.append((QRegExp(quote_regex), quote_format))
 
     def highlightBlock(self, text):
-        for pattern, frmt in self.highlightingRules:
+        for pattern, frmt in self.highlight_rules:
             expression = QRegExp(pattern)
             index = expression.indexIn(text)
             while index >= 0:
@@ -78,3 +84,21 @@ class SOQLHighlighter(QSyntaxHighlighter):
                 index = expression.indexIn(text, index + length)
 
         self.setCurrentBlockState(0)
+
+
+if __name__ == '__main__':
+    import sys
+    from PyQt5.QtWidgets import *
+
+    app = QApplication(sys.argv)
+
+    window = QMainWindow()
+    layout = QVBoxLayout()
+
+    window.setLayout(layout)
+    editor = QTextEdit(window)
+    layout.addWidget(editor)
+
+    highlighter = SOQLHighlighter(editor)
+    window.show()
+    sys.exit(app.exec_())

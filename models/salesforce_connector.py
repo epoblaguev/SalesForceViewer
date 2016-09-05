@@ -1,3 +1,4 @@
+from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 
 from simple_salesforce import Salesforce
@@ -24,7 +25,41 @@ def _clean_results(raw_results):
     return results
 
 
-class SForceConnector(object):
+class AbstractSForceConnector(metaclass=ABCMeta):
+    @abstractmethod
+    def query_raw(self, query):
+        pass
+
+    @abstractmethod
+    def query(self, query):
+        pass
+
+    @abstractmethod
+    def query_more_raw(self):
+        pass
+
+    @abstractmethod
+    def query_more(self):
+        pass
+
+    @abstractmethod
+    def insert_into_table(self, table_name, insert_dict):
+        pass
+
+    @abstractmethod
+    def get_table_fields(self, table_name, fields={}):
+        pass
+
+    @abstractmethod
+    def get_tables(self, table_names=[]) -> list:
+        pass
+
+    @abstractmethod
+    def close(self):
+        pass
+
+
+class SForceConnector(AbstractSForceConnector):
     def __init__(self, username: str, password: str, sandbox: bool, security_token: str = ''):
         self.session = Salesforce(username=username, password=password, security_token=security_token, sandbox=sandbox)
         self.next_record_url = None

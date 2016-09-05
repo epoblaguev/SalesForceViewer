@@ -3,14 +3,15 @@ import json
 
 
 def load_config(path=None):
-    if path is None:
-        path = os.path.join(os.path.expanduser('~'), '.sforce_viewer.json')
     empty_value = {
         'username': '',
         'password': '',
         'sandbox': False,
         'security_token': ''
     }
+
+    if path is None:
+        path = os.path.join(os.path.expanduser('~'), '.sforce_viewer.json')
 
     if not os.path.exists(path):
         return {'': empty_value}

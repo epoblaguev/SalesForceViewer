@@ -1,7 +1,8 @@
-from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
-from salesforce_connector import SForceConnector
+from PyQt5.QtWidgets import *
+
 import utils
+from models.salesforce_connector import SForceConnector
 
 
 class LoginWindow(QDialog):

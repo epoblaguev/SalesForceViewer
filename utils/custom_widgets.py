@@ -1,15 +1,14 @@
-
+import PyQt5.QtGui as qtg
+import PyQt5.QtWidgets as qtw
 from PyQt5.QtCore import QRegExp, Qt
-from PyQt5.QtGui import QFont, QSyntaxHighlighter, QTextCharFormat, QGuiApplication
-from PyQt5.QtWidgets import QTableWidget
 
 
-class ResultsTable(QTableWidget):
-    def __init__(self, *args):
-        QTableWidget.__init__(self)
+class ResultsTable(qtw.QTableWidget):
+    def __init__(self, *args, parent=None):
+        super(ResultsTable, self).__init__(parent)
         self.setSortingEnabled(True)
-        self.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.clipboard = QGuiApplication.clipboard()
+        self.setEditTriggers(qtw.QAbstractItemView.NoEditTriggers)
+        self.clipboard = qtg.QGuiApplication.clipboard()
 
         if len(args) >= 2:
             self.set_data(args[0], args[1])
@@ -24,7 +23,7 @@ class ResultsTable(QTableWidget):
 
         for row_i, row in enumerate(rows):
             for col_i, col in enumerate(row):
-                item = QTableWidgetItem(col)
+                item = qtw.QTableWidgetItem(col)
                 self.setItem(row_i, col_i, item)
 
     def clear_data(self):
@@ -33,23 +32,8 @@ class ResultsTable(QTableWidget):
         while self.rowCount() > 0:
             self.removeRow(0)
 
-    def keyPressEvent(self, e):
-        if e.modifiers() & Qt.ControlModifier:  # Control Modifier
 
-            if e.key() == Qt.Key_C:  # Copy Selected Range
-                selected = self.selectedRanges()[0]
-
-                rows = []
-                for row in range(selected.topRow(), selected.bottomRow() + 1):
-                    columns = []
-                    for col in range(selected.leftColumn(), selected.rightColumn() + 1):
-                        columns.append(self.item(row, col).text().replace('\t', ' '))
-                    rows.append(columns)
-                text = '\n'.join('\t'.join(cols) for cols in rows)
-                self.clipboard.setText(text)
-
-
-class SOQLHighlighter(QSyntaxHighlighter):
+class SOQLHighlighter(qtg.QSyntaxHighlighter):
 
     def __init__(self, parent=None):
         keywords = ['and', 'asc', 'desc', 'excludes', 'first', 'from', 'group', 'having', 'in', 'includes', 'last',
@@ -59,14 +43,14 @@ class SOQLHighlighter(QSyntaxHighlighter):
 
         super(SOQLHighlighter, self).__init__(parent)
 
-        keyword_format = QTextCharFormat()
+        keyword_format = qtg.QTextCharFormat()
         keyword_format.setForeground(Qt.blue)
-        keyword_format.setFontWeight(QFont.Bold)
+        keyword_format.setFontWeight(qtg.QFont.Bold)
 
-        symbol_format = QTextCharFormat()
+        symbol_format = qtg.QTextCharFormat()
         symbol_format.setForeground(Qt.red)
 
-        quote_format = QTextCharFormat()
+        quote_format = qtg.QTextCharFormat()
         quote_format.setForeground(Qt.darkCyan)
 
         keyword_patterns = ['\\b{0}\\b'.format(word) for word in keywords]

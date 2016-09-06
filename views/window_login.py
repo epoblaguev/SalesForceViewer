@@ -1,8 +1,8 @@
-from PyQt5.QtCore import Qt
 import PyQt5.QtWidgets as qtw
+from PyQt5.QtCore import Qt
 
-from utils import utils
 from models.salesforce_connector import SForceConnector
+from utils import utils
 
 
 class LoginWindow(qtw.QDialog):
@@ -41,7 +41,6 @@ class LoginWindow(qtw.QDialog):
         self.txt_password.setEchoMode(qtw.QLineEdit.Password)
         self.cmb_saved_logins.addItems(sorted(saved_logins.keys()))
         self.cmb_environment.addItems(['Production', 'Sandbox'])
-        self.btn_exit.setStyleSheet('background-color: red')
 
         self.btn_login.clicked.connect(self._handle_login)
         self.btn_save.clicked.connect(self._save_login)

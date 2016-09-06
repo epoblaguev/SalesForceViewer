@@ -1,7 +1,35 @@
+from functools import partial
+
+import PyQt5.QtGui as qtg
 import PyQt5.QtWidgets as qtw
+from PyQt5.QtCore import QEvent
 from PyQt5.QtCore import Qt
 
 from utils.custom_widgets import SOQLHighlighter, ResultsTable
+
+
+def _table_selection_to_text(table: ResultsTable, include_headers=False):
+    if not table.selectedRanges():
+        return
+
+    selected = table.selectedRanges()[0]
+
+    top_row = selected.topRow()
+    bottom_row = selected.bottomRow()
+    left_col = selected.leftColumn()
+    right_col = selected.rightColumn()
+
+    rows = []
+    if include_headers:
+        rows.append([table.horizontalHeaderItem(i).text() for i in range(left_col, right_col + 1)])
+
+    for row in range(top_row, bottom_row + 1):
+        columns = []
+        for col in range(left_col, right_col + 1):
+            columns.append(table.item(row, col).text().replace('\t', ' '))
+        rows.append(columns)
+    text = '\n'.join('\t'.join(cols) for cols in rows)
+    return text
 
 
 class MainWindow(qtw.QMainWindow):
@@ -19,8 +47,10 @@ class MainWindow(qtw.QMainWindow):
         self._btn_query_more = qtw.QPushButton('Query More')
         self._frm_nw = qtw.QFrame()
         self._frm_ne = qtw.QFrame()
+        self._frm_buttons = qtw.QFrame()
         self._layout_nw = qtw.QVBoxLayout()
         self._layout_ne = qtw.QVBoxLayout()
+        self._layout_buttons = qtw.QHBoxLayout()
         self._txt_query = qtw.QTextEdit()
         self._tbl_s = ResultsTable()
         self._splitter_h = qtw.QSplitter(Qt.Horizontal)
@@ -29,6 +59,7 @@ class MainWindow(qtw.QMainWindow):
         self._txt_filter = qtw.QLineEdit()
         self._syntax_highlighter = SOQLHighlighter(self._txt_query)
         self._status_bar = qtw.QStatusBar()
+        self._lbl_status = qtw.QLabel(self)
 
         # --- ARRANGE ELEMENTS ---
 
@@ -43,14 +74,16 @@ class MainWindow(qtw.QMainWindow):
         self._frm_ne.setFrameShape(qtw.QFrame.StyledPanel)
         self._frm_ne.setLayout(self._layout_ne)
         self._layout_ne.addWidget(self._txt_query)
-        self._layout_ne.addWidget(self._btn_query)
-        self._layout_ne.addWidget(self._btn_query_more)
+        self._layout_ne.addLayout(self._layout_buttons)
+        self._layout_buttons.addWidget(self._btn_query)
+        self._layout_buttons.addWidget(self._btn_query_more)
         self._txt_query.setFrameShape(qtw.QFrame.StyledPanel)
         self._btn_query_more.setDisabled(True)
 
         # Bottom
         self._tbl_s.setFrameShape(qtw.QFrame.StyledPanel)
         self.setStatusBar(self._status_bar)
+        self._status_bar.addPermanentWidget(self._lbl_status)
 
         # Splitters
         self._splitter_h.addWidget(self._frm_nw)
@@ -66,8 +99,12 @@ class MainWindow(qtw.QMainWindow):
         # Finalize
         self.setWindowTitle('SalesForce Viewer')
 
-    def listener_run_query(self, func):
-        self._btn_query.clicked.connect(func)
+        # Install Event Filters
+        self._txt_query.installEventFilter(self)
+        self._tbl_s.installEventFilter(self)
+
+        # Clipboard
+        self.clipboard = qtg.QGuiApplication.clipboard()
 
     def set_listener_run_query(self, func):
         self._btn_query.clicked.connect(func)
@@ -80,6 +117,46 @@ class MainWindow(qtw.QMainWindow):
 
     def set_listener_filter_tables(self, func):
         self._txt_filter.textChanged.connect(func)
+
+    def eventFilter(self, source, event):
+        # Key Press Event on Query Text Box
+        if source == self._txt_query and event.type() == QEvent.KeyPress:
+            # Ctrl+Enter
+            if event.modifiers() & Qt.ControlModifier and event.key() == Qt.Key_Return:
+                self._btn_query.click()
+                return True
+
+        # Key Press Event on Results Table
+        elif source == self._tbl_s and event.type() == QEvent.KeyPress:
+            if event.modifiers() & Qt.ControlModifier:
+                if event.key() == Qt.Key_A:
+                    self._tbl_s.selectAll()
+                    return True
+                elif event.key() == Qt.Key_C:
+                    self.copy_selected_cells(False)
+                    return True
+
+        # Right Click on Results Table
+        elif source == self._tbl_s and event.type() == QEvent.ContextMenu:
+            menu = qtw.QMenu(self)
+            select_all = qtw.QAction('Select All (Ctrl+A)', self)
+            copy_no_headers = qtw.QAction('Copy Cells (Ctrl+C)', self)
+            copy_headers = qtw.QAction('Copy Cells With Headers', self)
+            menu.addAction(select_all)
+            menu.addAction(copy_no_headers)
+            menu.addAction(copy_headers)
+
+            select_all.triggered.connect(source.selectAll)
+            copy_no_headers.triggered.connect(partial(self.copy_selected_cells, False))
+            copy_headers.triggered.connect(partial(self.copy_selected_cells, True))
+
+            menu.popup(qtg.QCursor.pos())
+
+        return qtw.QMainWindow.eventFilter(self, source, event)
+
+    def copy_selected_cells(self, include_headers=False):
+        self.clipboard.setText(_table_selection_to_text(self._tbl_s, include_headers))
+        self.temp_status_text = 'Cells Copied To Clipboard'
 
     @property
     def filter_text(self):
@@ -103,6 +180,7 @@ class MainWindow(qtw.QMainWindow):
             self._lst_tables.takeItem(0)
         for name in table_names:
             self._lst_tables.addItem(qtw.QListWidgetItem(name))
+        self.temp_status_text = 'Available Tables: {0}'.format(self._lst_tables.count())
 
     @property
     def query_text(self):
@@ -111,14 +189,23 @@ class MainWindow(qtw.QMainWindow):
     @query_text.setter
     def query_text(self, text):
         self._txt_query.setText(text)
+        self.temp_status_text = 'Query Text Updated'
 
     @property
     def status_text(self):
-        return self._status_bar.currentMessage()
+        return self._lbl_status.text()
 
     @status_text.setter
     def status_text(self, text):
-        self._status_bar.showMessage(text)
+        self._lbl_status.setText(text)
+
+    @property
+    def temp_status_text(self):
+        return self._status_bar.currentMessage()
+
+    @temp_status_text.setter
+    def temp_status_text(self, text):
+        return self._status_bar.showMessage(text, 1000)
 
     @property
     def query_more_enabled(self) -> bool:
@@ -139,3 +226,4 @@ class MainWindow(qtw.QMainWindow):
 
     def update_results_table(self, headers: list, rows: list):
         self._tbl_s.set_data(headers, rows)
+        self.temp_status_text = 'Results Updated: {0} Columns, {1} Rows'.format(len(headers), len(rows))

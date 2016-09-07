@@ -1,11 +1,12 @@
 from functools import partial
+import traceback
 
 import PyQt5.QtGui as qtg
 import PyQt5.QtWidgets as qtw
 from PyQt5.QtCore import QEvent
 from PyQt5.QtCore import Qt
 
-from utils.custom_widgets import SOQLHighlighter, ResultsTable
+from utils.custom_widgets import SOQLHighlighter, ResultsTable, FindDialog
 
 
 def _table_selection_to_text(table: ResultsTable, include_headers=False):
@@ -90,6 +91,8 @@ class MainWindow(qtw.QMainWindow):
         self._splitter_h.addWidget(self._frm_ne)
         self._splitter_v.addWidget(self._splitter_h)
         self._splitter_v.addWidget(self._tbl_s)
+        self._splitter_h.setSizes([100, 50])
+        self._splitter_v.setSizes([100, 50])
 
         # Root
         self.setCentralWidget(self._root_frame)
@@ -102,28 +105,48 @@ class MainWindow(qtw.QMainWindow):
         # Install Event Filters
         self._txt_query.installEventFilter(self)
         self._tbl_s.installEventFilter(self)
+        self._lst_tables.installEventFilter(self)
 
-        # Clipboard
-        self.clipboard = qtg.QGuiApplication.clipboard()
+        # Event Functions
+        self._event_callbacks = {}
+
+        # Other
+        self._clipboard = qtg.QGuiApplication.clipboard()
+        self._find_dialog = FindDialog(self._syntax_highlighter)
 
     def set_listener_run_query(self, func):
         self._btn_query.clicked.connect(func)
+        self._event_callbacks['run_query'] = func
 
     def set_listener_query_more(self, func):
         self._btn_query_more.clicked.connect(func)
+        self._event_callbacks['query_more'] = func
 
     def set_listener_table_selected(self, func):
         self._lst_tables.doubleClicked.connect(func)
+        self._event_callbacks['table_selected'] = func
 
     def set_listener_filter_tables(self, func):
         self._txt_filter.textChanged.connect(func)
+        self._event_callbacks['filter_tables'] = func
 
     def eventFilter(self, source, event):
         # Key Press Event on Query Text Box
         if source == self._txt_query and event.type() == QEvent.KeyPress:
             # Ctrl+Enter
             if event.modifiers() & Qt.ControlModifier and event.key() == Qt.Key_Return:
-                self._btn_query.click()
+                self._event_callbacks['run_query']()
+                return True
+
+            # Ctrl+F
+            elif event.modifiers() & Qt.ControlModifier and event.key() == Qt.Key_F:
+                self._find_dialog.show()
+                return True
+
+        # Enter Pressed in Table List
+        elif source == self._lst_tables and event.type() == QEvent.KeyPress:
+            if event.key() == Qt.Key_Return:
+                self._event_callbacks['table_selected']()
                 return True
 
         # Key Press Event on Results Table
@@ -155,7 +178,7 @@ class MainWindow(qtw.QMainWindow):
         return qtw.QMainWindow.eventFilter(self, source, event)
 
     def copy_selected_cells(self, include_headers=False):
-        self.clipboard.setText(_table_selection_to_text(self._tbl_s, include_headers))
+        self._clipboard.setText(_table_selection_to_text(self._tbl_s, include_headers))
         self.temp_status_text = 'Cells Copied To Clipboard'
 
     @property
@@ -205,7 +228,7 @@ class MainWindow(qtw.QMainWindow):
 
     @temp_status_text.setter
     def temp_status_text(self, text):
-        return self._status_bar.showMessage(text, 1000)
+        self._status_bar.showMessage(text, 1000)
 
     @property
     def query_more_enabled(self) -> bool:

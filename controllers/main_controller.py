@@ -26,7 +26,7 @@ class MainController(object):
             results = self.model.query(query)
             self.view.update_results_table(results.headers, results.records)
             self.view.status_text = '{0} / {1} Results'.format(results.size, results.totalSize)
-            self.view.query_more_enabled = results.size < results.totalSize
+            self.view.query_more_enabled = not results.done
         except Exception as e:
             print(traceback.format_exc())
             self.view.error_message = str(e)

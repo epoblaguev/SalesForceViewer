@@ -8,9 +8,7 @@ from utils import utils
 class LoginWindow(qtw.QDialog):
 
     def __init__(self, parent=None, saved_logins: dict = {}):
-        super(LoginWindow, self).__init__(parent)
-
-        row_count = 0
+        super().__init__(parent)
 
         self.sf_con = None
         self.saved_logins = saved_logins
@@ -47,26 +45,27 @@ class LoginWindow(qtw.QDialog):
         self.btn_exit.clicked.connect(self.reject)
         self.cmb_saved_logins.currentIndexChanged.connect(self._select_saved_login)
 
-        layout = qtw.QGridLayout(self)
+        self._root_layout = qtw.QGridLayout(self)
 
-        layout.addWidget(self.lbl_saved_logins, row_count, 0, 1, 1)
-        layout.addWidget(self.cmb_saved_logins, row_count, 1, 1, 2)
+        row_count = 0
+        self._root_layout.addWidget(self.lbl_saved_logins, row_count, 0, 1, 1)
+        self._root_layout.addWidget(self.cmb_saved_logins, row_count, 1, 1, 2)
         row_count += 1
-        layout.addWidget(self.lbl_username, row_count, 0, 1, 1)
-        layout.addWidget(self.txt_username, row_count, 1, 1, 2)
+        self._root_layout.addWidget(self.lbl_username, row_count, 0, 1, 1)
+        self._root_layout.addWidget(self.txt_username, row_count, 1, 1, 2)
         row_count += 1
-        layout.addWidget(self.lbl_password, row_count, 0, 1, 1)
-        layout.addWidget(self.txt_password, row_count, 1, 1, 2)
+        self._root_layout.addWidget(self.lbl_password, row_count, 0, 1, 1)
+        self._root_layout.addWidget(self.txt_password, row_count, 1, 1, 2)
         row_count += 1
-        layout.addWidget(self.lbl_environment, row_count, 0, 1, 1)
-        layout.addWidget(self.cmb_environment, row_count, 1, 1, 2)
+        self._root_layout.addWidget(self.lbl_environment, row_count, 0, 1, 1)
+        self._root_layout.addWidget(self.cmb_environment, row_count, 1, 1, 2)
         row_count += 1
-        layout.addWidget(self.lbl_security_token, row_count, 0, 1, 1)
-        layout.addWidget(self.txt_security_token, row_count, 1, 1, 2)
+        self._root_layout.addWidget(self.lbl_security_token, row_count, 0, 1, 1)
+        self._root_layout.addWidget(self.txt_security_token, row_count, 1, 1, 2)
         row_count += 1
-        layout.addWidget(self.btn_login, row_count, 0, 1, 1)
-        layout.addWidget(self.btn_save, row_count, 1, 1, 1)
-        layout.addWidget(self.btn_exit, row_count, 2, 1, 1)
+        self._root_layout.addWidget(self.btn_login, row_count, 0, 1, 1)
+        self._root_layout.addWidget(self.btn_save, row_count, 1, 1, 1)
+        self._root_layout.addWidget(self.btn_exit, row_count, 2, 1, 1)
 
     def _save_login(self):
         username = self.txt_username.text()

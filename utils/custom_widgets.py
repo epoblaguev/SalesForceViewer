@@ -1,11 +1,12 @@
 import PyQt5.QtGui as qtg
 import PyQt5.QtWidgets as qtw
 from PyQt5.QtCore import QRegExp, Qt
+import re
 
 
 class ResultsTable(qtw.QTableWidget):
     def __init__(self, *args, parent=None):
-        super(ResultsTable, self).__init__(parent)
+        super().__init__(parent)
         self.setSortingEnabled(True)
         self.setEditTriggers(qtw.QAbstractItemView.NoEditTriggers)
         self.clipboard = qtg.QGuiApplication.clipboard()
@@ -36,27 +37,43 @@ class ResultsTable(qtw.QTableWidget):
 class SOQLHighlighter(qtg.QSyntaxHighlighter):
 
     def __init__(self, parent=None):
-        keywords = ['and', 'asc', 'desc', 'excludes', 'first', 'from', 'group', 'having', 'in', 'includes', 'last',
+        super().__init__(parent)
+
+        self.keywords = ['and', 'asc', 'desc', 'excludes', 'first', 'from', 'group', 'having', 'in', 'includes', 'last',
                     'like', 'limit', 'not', 'null', 'nulls', 'or', 'select', 'where', 'with']
-        symbols = list('-=,') + r'\[,\],\(,\),!='.split(',')
-        quote_regex = r"'[^'\\]*(\\.[^'\\]*)*('|$)"
+        self.symbols = list('-=,') + r'\[,\],\(,\),!='.split(',')
+        self.quote_regex = r"'[^'\\]*(\\.[^'\\]*)*('|$)"
 
-        super(SOQLHighlighter, self).__init__(parent)
+        self.search_text = None
 
-        keyword_format = qtg.QTextCharFormat()
-        keyword_format.setForeground(Qt.blue)
-        keyword_format.setFontWeight(qtg.QFont.Bold)
+        self.keyword_format = qtg.QTextCharFormat()
+        self.keyword_format.setForeground(Qt.blue)
+        self.keyword_format.setFontWeight(qtg.QFont.Bold)
 
-        symbol_format = qtg.QTextCharFormat()
-        symbol_format.setForeground(Qt.red)
+        self.symbol_format = qtg.QTextCharFormat()
+        self.symbol_format.setForeground(Qt.red)
 
-        quote_format = qtg.QTextCharFormat()
-        quote_format.setForeground(Qt.darkCyan)
+        self.quote_format = qtg.QTextCharFormat()
+        self.quote_format.setForeground(Qt.darkCyan)
 
-        keyword_patterns = ['\\b{0}\\b'.format(word) for word in keywords]
-        self.highlight_rules = [(QRegExp(pattern, Qt.CaseInsensitive), keyword_format) for pattern in keyword_patterns]
-        self.highlight_rules.extend((QRegExp(pattern), symbol_format) for pattern in symbols)
-        self.highlight_rules.append((QRegExp(quote_regex), quote_format))
+        self.search_format = qtg.QTextCharFormat()
+        self.search_format.setBackground(Qt.green)
+
+        self.keyword_patterns = ['\\b{0}\\b'.format(word) for word in self.keywords]
+        self.highlight_rules = []
+        self._update_highlight_rules()
+
+    def find(self, text):
+        self.search_text = text
+        self._update_highlight_rules()
+
+    def _update_highlight_rules(self):
+        self.highlight_rules = [(QRegExp(pattern, Qt.CaseInsensitive), self.keyword_format) for pattern in
+                                self.keyword_patterns]
+        self.highlight_rules.extend((QRegExp(pattern), self.symbol_format) for pattern in self.symbols)
+        self.highlight_rules.append((QRegExp(self.quote_regex), self.quote_format))
+        if self.search_text not in (None, ''):
+            self.highlight_rules.append((QRegExp(self.search_text, Qt.CaseInsensitive), self.search_format))
 
     def highlightBlock(self, text):
         for pattern, frmt in self.highlight_rules:
@@ -69,6 +86,34 @@ class SOQLHighlighter(qtg.QSyntaxHighlighter):
 
         self.setCurrentBlockState(0)
 
+
+class FindDialog(qtw.QDialog):
+    def __init__(self, find_area: SOQLHighlighter, parent=None):
+        super().__init__(parent)
+
+        self.setWindowTitle('Find Text')
+
+        self._find_area = find_area
+
+        self._txt_find = qtw.QLineEdit()
+        self._btn_close = qtw.QPushButton('Close')
+
+        self._root_layout = qtw.QVBoxLayout(self)
+        self._root_layout.addWidget(self._txt_find)
+        self._root_layout.addWidget(self._btn_close)
+
+        self._txt_find.textChanged.connect(self._find)
+        self._btn_close.clicked.connect(self.close)
+
+    def closeEvent(self, event):
+        self._txt_find.setText('')
+        self._find_area.find(None)
+        self._find_area.rehighlight()
+
+    def _find(self):
+        text = re.escape(self._txt_find.text())
+        self._find_area.find(text)
+        self._find_area.rehighlight()
 
 if __name__ == '__main__':
     import sys

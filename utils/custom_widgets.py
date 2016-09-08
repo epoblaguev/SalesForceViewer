@@ -1,7 +1,8 @@
+import re
+
 import PyQt5.QtGui as qtg
 import PyQt5.QtWidgets as qtw
 from PyQt5.QtCore import QRegExp, Qt
-import re
 
 
 class ResultsTable(qtw.QTableWidget):
@@ -9,7 +10,6 @@ class ResultsTable(qtw.QTableWidget):
         super().__init__(parent)
         self.setSortingEnabled(True)
         self.setEditTriggers(qtw.QAbstractItemView.NoEditTriggers)
-        self.clipboard = qtg.QGuiApplication.clipboard()
 
         if len(args) >= 2:
             self.set_data(args[0], args[1])
@@ -20,12 +20,13 @@ class ResultsTable(qtw.QTableWidget):
         self.setColumnCount(len(headers))
         self.setRowCount(len(rows))
         self.setHorizontalHeaderLabels(headers)
-        self.resizeColumnsToContents()
 
         for row_i, row in enumerate(rows):
             for col_i, col in enumerate(row):
                 item = qtw.QTableWidgetItem(col)
                 self.setItem(row_i, col_i, item)
+
+        self.resizeColumnsToContents()
 
     def clear_data(self):
         while self.columnCount() > 0:

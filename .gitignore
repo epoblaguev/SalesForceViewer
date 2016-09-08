@@ -4,3 +4,8 @@ dist/
 main.spec
 .DS_Store
 __pycache__/main.cpython-35.pyc
+controllers/__pycache__/
+models/__pycache__/
+tests/.cache/
+utils/__pycache__/
+views/__pycache__/

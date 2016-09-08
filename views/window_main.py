@@ -1,5 +1,4 @@
 from functools import partial
-import traceback
 
 import PyQt5.QtGui as qtg
 import PyQt5.QtWidgets as qtw
@@ -178,7 +177,7 @@ class MainWindow(qtw.QMainWindow):
         return qtw.QMainWindow.eventFilter(self, source, event)
 
     def copy_selected_cells(self, include_headers=False):
-        self._clipboard.setText(_table_selection_to_text(self._tbl_s, include_headers))
+        self._clipboard.setText(_table_selection_to_text(self._tbl_s, include_headers), mode=self._clipboard.Clipboard)
         self.temp_status_text = 'Cells Copied To Clipboard'
 
     @property

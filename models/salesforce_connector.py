@@ -1,10 +1,10 @@
 from abc import ABCMeta, abstractmethod
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 
 from simple_salesforce import Salesforce
 from simple_salesforce import api
 
-Results = namedtuple('Results', 'totalSize size done headers records')
+Results = namedtuple('Results', 'totalSize size done headers records raw_records')
 
 
 def _clean_results(raw_results):
@@ -20,9 +20,17 @@ def _clean_results(raw_results):
         size=len(raw_results['records']),
         done=raw_results['done'],
         headers=[header for header in raw_results['records'][0].keys()],
-        records=[list(record.values()) for record in raw_results['records']]
+        records=[[_flatten_record_value(val) for val in record.values()] for record in raw_results['records']],
+        raw_records=raw_results['records']
     )
     return results
+
+
+def _flatten_record_value(val):
+    if not isinstance(val, OrderedDict):
+        return val
+    else:
+        return ' '.join('[{0}: {1}]'.format(k, _flatten_record_value(val[k])) for k in val.keys() if k != 'attributes')
 
 
 class AbstractSForceConnector(metaclass=ABCMeta):
@@ -60,8 +68,8 @@ class AbstractSForceConnector(metaclass=ABCMeta):
 
 
 class SForceConnector(AbstractSForceConnector):
-    def __init__(self, username: str, password: str, sandbox: bool, security_token: str = ''):
-        self.session = Salesforce(username=username, password=password, security_token=security_token, sandbox=sandbox)
+    def __init__(self, username: str, password: str, sandbox: bool, security_token: str = '', _sf_lib=Salesforce):
+        self.session = _sf_lib(username=username, password=password, security_token=security_token, sandbox=sandbox)
         self.next_record_url = None
         self.prev_results = None
         self.prev_size = None

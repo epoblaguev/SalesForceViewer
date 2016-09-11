@@ -73,6 +73,8 @@ class SForceConnector(AbstractSForceConnector):
         self.next_record_url = None
         self.prev_results = None
         self.prev_size = None
+        self.loaded_tables = []
+        self.loaded_fields = {}
 
     def query_raw(self, query):
         results = self.session.query(query)
@@ -110,17 +112,16 @@ class SForceConnector(AbstractSForceConnector):
         response = getattr(self.session, table_name).create(insert_dict)
         return response
 
-    def get_table_fields(self, table_name, fields={}):
-        if table_name not in fields:
-            fields[table_name] = {field['name'].lower(): field['type']
-                                  for field in getattr(self.session, table_name).describe()['fields']
-                                  if field['byteLength'] > 0}
-        return fields[table_name]
+    def get_table_fields(self, table_name, reload=False):
+        if table_name not in self.loaded_fields or reload:
+            self.loaded_fields[table_name] = {field['name']: field
+                                              for field in getattr(self.session, table_name).describe()['fields']}
+        return self.loaded_fields[table_name]
 
-    def get_tables(self, table_names=[]) -> list:
-        if len(table_names) == 0:
-            table_names.extend(obj['name'] for obj in self.session.describe()['sobjects'] if obj['searchable'])
-        return table_names
+    def get_tables(self, reload=False) -> list:
+        if len(self.loaded_tables) == 0 or reload:
+            self.loaded_tables = [obj['name'] for obj in self.session.describe()['sobjects'] if obj['searchable']]
+        return self.loaded_tables
 
     def close(self):
         self.session.close()

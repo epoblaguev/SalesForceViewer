@@ -27,6 +27,9 @@ class ResultsTable(qtw.QTableWidget):
                 self.setItem(row_i, col_i, item)
 
         self.resizeColumnsToContents()
+        for col_i in range(self.columnCount()):
+            if self.columnWidth(col_i) > (self.width() / 4):
+                self.setColumnWidth(col_i, self.width() / 4)
 
     def clear_data(self):
         while self.columnCount() > 0:
@@ -90,7 +93,7 @@ class SOQLHighlighter(qtg.QSyntaxHighlighter):
 
 class FindDialog(qtw.QDialog):
     def __init__(self, find_area: SOQLHighlighter, parent=None):
-        super().__init__(parent)
+        super().__init__(parent, Qt.WindowSystemMenuHint | Qt.WindowTitleHint)
 
         self.setWindowTitle('Find Text')
 
@@ -105,6 +108,7 @@ class FindDialog(qtw.QDialog):
 
         self._txt_find.textChanged.connect(self._find)
         self._btn_close.clicked.connect(self.close)
+        self._txt_find.setFocus()
 
     def closeEvent(self, event):
         self._txt_find.setText('')
